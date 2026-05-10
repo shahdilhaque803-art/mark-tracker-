@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MARK — Syllabus & Attendance Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #252a3a;
+    --accent: #4fffb0;
+    --accent2: #ff6b6b;
+    --accent3: #ffd166;
+    --blue: #60a5fa;
+    --text: #e8eaf2;
+    --muted: #6b7280;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    backdrop-filter: blur(10px);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.7rem;
+    color: var(--accent);
+    letter-spacing: 6px;
+  }
+  .header-stats { display: flex; gap: 28px; }
+  .hstat { text-align: right; font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .hstat strong { display: block; font-size: 1.05rem; font-family: 'Syne', sans-serif; font-weight: 700; color: var(--text); }
+  .hstat strong.green  { color: var(--accent); }
+  .hstat strong.red    { color: var(--accent2); }
+  .hstat strong.yellow { color: var(--accent3); }
+
+  /* TABS */
+  .tabs {
+    max-width: 1100px;
+    margin: 28px auto 0;
+    padding: 0 24px;
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 22px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+
+  /* MAIN */
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 0; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* FORMS */
+  .add-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 28px;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+  .add-form { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  input[type="text"], input[type="number"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 13px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.83rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 190px;
+  }
+  input[type="number"] { width: 110px; }
+  input:focus { border-color: var(--accent); }
+
+  /* BUTTONS */
+  .btn {
+    padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem;
+    letter-spacing: 0.5px; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: #0d0f14; }
+  .btn-primary:hover { background: #3de8a0; transform: translateY(-1px); }
+  .btn-danger { background: transparent; color: var(--accent2); border: 1px solid var(--accent2); padding: 5px 11px; font-size: 0.7rem; }
+  .btn-danger:hover { background: var(--accent2); color: white; }
+  .btn-sm { padding: 5px 10px; font-size: 0.7rem; border-radius: 6px; }
+
+  /* SUBJECT CARDS */
+  .subjects-grid { display: grid; gap: 18px; }
+  .subject-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: slideIn 0.35s ease;
+    transition: border-color 0.2s;
+  }
+  .subject-card:hover { border-color: #333a55; }
+  .card-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-header:hover { background: var(--surface2); }
+  .subject-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .badge { font-size: 0.58rem; padding: 2px 8px; border-radius: 20px; font-family: 'DM Mono', monospace; }
+  .badge-green  { background: rgba(79,255,176,0.12); color: var(--accent);  border: 1px solid rgba(79,255,176,0.25); }
+  .badge-yellow { background: rgba(255,209,102,0.12); color: var(--accent3); border: 1px solid rgba(255,209,102,0.25); }
+  .badge-red    { background: rgba(255,107,107,0.12); color: var(--accent2); border: 1px solid rgba(255,107,107,0.25); }
+  .card-meta { display: flex; gap: 20px; align-items: center; }
+  .mini-stat { text-align: right; font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+  .mini-stat strong { display: block; font-size: 0.92rem; font-family: 'Syne', sans-serif; font-weight: 700; color: var(--text); }
+  .chevron { color: var(--muted); font-size: 0.78rem; transition: transform 0.3s; margin-left: 8px; }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* PROGRESS BARS */
+  .progress-row {
+    padding: 13px 20px;
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .progress-item { flex: 1; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.8px; }
+  .progress-label span:last-child { color: var(--text); font-weight: 500; }
+  .progress-track { height: 5px; background: var(--border); border-radius: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 10px; transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+  .fill-green  { background: var(--accent); }
+  .fill-yellow { background: var(--accent3); }
+  .fill-red    { background: var(--accent2); }
+  .fill-blue   { background: var(--blue); }
+
+  /* CARD BODY */
+  .card-body { padding: 18px 20px; display: none; }
+  .card-body.open { display: block; }
+
+  /* Chapter summary box */
+  .chapters-info {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .ch-stat { text-align: center; flex: 1; min-width: 60px; }
+  .ch-stat .val { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; line-height: 1; margin-bottom: 3px; }
+  .ch-stat .lbl { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+  .ch-divider { width: 1px; height: 36px; background: var(--border); flex-shrink: 0; }
+
+  .topics-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .topics-title { font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+  .add-topic-form { display: flex; gap: 8px; margin-bottom: 14px; }
+  .add-topic-form input[type="text"] { flex: 1; width: auto; }
+  .topics-list { display: flex; flex-direction: column; gap: 7px; }
+  .topic-row {
+    display: flex; align-items: center; gap: 11px;
+    padding: 9px 13px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px; transition: all 0.2s;
+  }
+  .topic-row:hover { background: var(--surface2); }
+  .topic-row.done { border-color: rgba(79,255,176,0.2); background: rgba(79,255,176,0.04); }
+  .topic-check {
+    width: 17px; height: 17px; border-radius: 4px;
+    border: 2px solid var(--border); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s;
+  }
+  .topic-check:hover { border-color: var(--accent); }
+  .topic-row.done .topic-check { background: var(--accent); border-color: var(--accent); }
+  .topic-check::after { content: '✓'; font-size: 10px; color: #0d0f14; display: none; font-weight: 700; }
+  .topic-row.done .topic-check::after { display: block; }
+  .topic-name { flex: 1; font-size: 0.8rem; color: var(--text); transition: color 0.2s; }
+  .topic-row.done .topic-name { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(79,255,176,0.4); }
+  .card-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
+
+  /* Chapter stepper */
+  .chapter-stepper {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .stepper-group { display: flex; flex-direction: column; gap: 5px; }
+  .stepper-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .stepper-row { display: flex; align-items: center; gap: 6px; }
+  .step-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+  }
+  .step-btn:hover { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+  .step-btn.minus:hover { border-color: var(--accent2); color: var(--accent2); }
+  .step-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    min-width: 36px;
+    text-align: center;
+  }
+  .stepper-divider { width: 1px; height: 40px; background: var(--border); }
+  .stepper-pct {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent3);
+    min-width: 70px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 56px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 2.8rem; margin-bottom: 10px; }
+  .empty-state p { font-size: 0.82rem; }
+
+  /* ═══════════════════════
+     CALENDAR
+  ═══════════════════════ */
+  .cal-summary-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 28px;
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .cal-circle-wrap {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    flex-shrink: 0;
+  }
+  .cal-circle-wrap svg { transform: rotate(-90deg); }
+  .cal-circle-wrap .pct-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .cal-divider { width: 1px; height: 44px; background: var(--border); }
+  .cal-sum-stat { text-align: center; }
+  .cal-sum-stat .big { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .cal-sum-stat .big.green  { color: var(--accent); }
+  .cal-sum-stat .big.red    { color: var(--accent2); }
+  .cal-sum-stat .big.yellow { color: var(--accent3); }
+  .cal-sum-stat .lbl { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .cal-legend {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 0.65rem;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .ld { width: 11px; height: 11px; border-radius: 3px; display: inline-block; margin-right: 5px; vertical-align: middle; }
+  .ld-p { background: rgba(79,255,176,0.3); border: 1px solid var(--accent); }
+  .ld-a { background: rgba(255,107,107,0.25); border: 1px solid var(--accent2); }
+  .ld-t { border: 1px solid var(--accent); background: transparent; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+    gap: 16px;
+  }
+  .month-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .month-header {
+    padding: 11px 15px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .month-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.82rem; color: var(--text); }
+  .month-stats { font-size: 0.6rem; color: var(--muted); }
+  .month-stats .mp { color: var(--accent); font-weight: 600; }
+  .month-stats .mpct { color: var(--accent3); font-weight: 600; }
+
+  .cal-day-labels {
+    display: grid;
+    grid-template-columns: repeat(7,1fr);
+    padding: 7px 9px 3px;
+    gap: 2px;
+  }
+  .cal-day-lbl {
+    text-align: center;
+    font-size: 0.56rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+  }
+  .cal-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7,1fr);
+    padding: 3px 9px 11px;
+    gap: 2px;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.66rem;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    user-select: none;
+  }
+  .cal-day.empty   { cursor: default; pointer-events: none; }
+  .cal-day.future  { color: var(--border); cursor: default; pointer-events: none; }
+  .cal-day.unmarked { color: var(--muted); }
+  .cal-day.unmarked:hover { background: var(--surface2); border-color: var(--border); color: var(--text); }
+  .cal-day.today   { border-color: var(--accent) !important; color: var(--accent); font-weight: 700; }
+  .cal-day.present { background: rgba(79,255,176,0.14); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .cal-day.absent  { background: rgba(255,107,107,0.12); border-color: var(--accent2); color: var(--accent2); font-weight: 600; }
+  .cal-day.present:hover { background: rgba(79,255,176,0.25); }
+  .cal-day.absent:hover  { background: rgba(255,107,107,0.22); }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  @media (max-width: 640px) {
+    header { flex-direction: column; gap: 14px; align-items: flex-start; padding: 16px; }
+    .add-form { flex-direction: column; }
+    input[type="text"], input[type="number"] { width: 100%; }
+    .progress-row { flex-direction: column; gap: 10px; }
+    .card-meta { flex-wrap: wrap; gap: 10px; }
+    .cal-grid { grid-template-columns: 1fr; }
+    .cal-summary-bar { gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">MARK</div>
+  <div class="header-stats">
+    <div class="hstat">
+      <strong id="hdr-subjects">0</strong>
+      Subjects
+    </div>
+    <div class="hstat">
+      <strong id="hdr-syllabus" class="green">0%</strong>
+      Syllabus
+    </div>
+    <div class="hstat">
+      <strong id="hdr-attendance" class="green">0%</strong>
+      Attendance
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('syllabus', this)">📚 Syllabus</button>
+  <button class="tab-btn"        onclick="switchTab('calendar', this)">🗓 Calendar 2026</button>
+</div>
+
+<main>
+
+  <!-- ══ SYLLABUS ══ -->
+  <div class="tab-panel active" id="tab-syllabus">
+    <div class="add-section">
+      <div class="section-title">➕ Add Subject</div>
+      <div class="add-form">
+        <div class="field">
+          <label>Subject Name</label>
+          <input type="text" id="subjectName" placeholder="e.g. Data Structures" />
+        </div>
+        <div class="field">
+          <label>Total Chapters</label>
+          <input type="number" id="totalChapters" placeholder="12" min="1" />
+        </div>
+        <button class="btn btn-primary" onclick="addSubject()">Add Subject</button>
+      </div>
+    </div>
+    <div class="subjects-grid" id="subjectsList">
+      <div class="empty-state">
+        <div class="icon">📚</div>
+        <p>No subjects yet. Add your first subject above!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CALENDAR ══ -->
+  <div class="tab-panel" id="tab-calendar">
+
+    <!-- Summary -->
+    <div class="cal-summary-bar">
+      <div class="cal-circle-wrap">
+        <svg width="84" height="84" viewBox="0 0 84 84">
+          <circle cx="42" cy="42" r="34" fill="none" stroke="#252a3a" stroke-width="7"/>
+          <circle cx="42" cy="42" r="34" fill="none" stroke="#4fffb0" stroke-width="7"
+            stroke-dasharray="213.6" id="circleArc" stroke-dashoffset="213.6"
+            stroke-linecap="round" style="transition:stroke-dashoffset 0.7s ease,stroke 0.4s"/>
+        </svg>
+        <div class="pct-label" id="circleLabel">0%</div>
+      </div>
+      <div class="cal-divider"></div>
+      <div class="cal-sum-stat">
+        <div class="big green" id="sumPresent">0</div>
+        <div class="lbl">Days Present</div>
+      </div>
+      <div class="cal-divider"></div>
+      <div class="cal-sum-stat">
+        <div class="big red" id="sumAbsent">0</div>
+        <div class="lbl">Days Absent</div>
+      </div>
+      <div class="cal-divider"></div>
+      <div class="cal-sum-stat">
+        <div class="big yellow" id="sumTotal">0</div>
+        <div class="lbl">Total Marked</div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="cal-legend">
+      <span><span class="ld ld-p"></span>Present</span>
+      <span><span class="ld ld-a"></span>Absent</span>
+      <span><span class="ld ld-t"></span>Today</span>
+      <span style="color:#3a3f52;">— Click to mark present → click again for absent → click again to clear</span>
+    </div>
+
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+</main>
+
+<script>
+// ──────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────
+let subjects = JSON.parse(localStorage.getItem('mark_v2_subjects') || '[]');
+let calData  = JSON.parse(localStorage.getItem('mark_v2_cal') || '{}');
+// calData: { "2026-MM-DD": "present"|"absent" }
+
+const NOW = new Date();
+const TODAY_STR = iso(NOW);
+
+function iso(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+}
+
+function save() {
+  localStorage.setItem('mark_v2_subjects', JSON.stringify(subjects));
+  localStorage.setItem('mark_v2_cal',      JSON.stringify(calData));
+  updateHeader();
+}
+
+// ──────────────────────────────────────────
+// HEADER
+// ──────────────────────────────────────────
+function updateHeader() {
+  // subjects count
+  document.getElementById('hdr-subjects').textContent = subjects.length;
+
+  // syllabus avg %
+  let sylPct = 0;
+  if (subjects.length > 0) {
+    sylPct = subjects.reduce((acc, sub) => {
+      const done = sub.chaptersCompleted || sub.topics.filter(t => t.done).length;
+      const tot  = sub.totalChapters || sub.topics.length || 0;
+      return acc + (tot ? Math.round(done / tot * 100) : 0);
+    }, 0) / subjects.length;
+  }
+  const sylEl = document.getElementById('hdr-syllabus');
+  sylEl.textContent = Math.round(sylPct) + '%';
+  sylEl.className = sylPct >= 75 ? 'green' : sylPct >= 40 ? 'yellow' : 'red';
+
+  // attendance from calendar
+  const vals    = Object.values(calData);
+  const present = vals.filter(v => v === 'present').length;
+  const marked  = vals.length;
+  const attPct  = marked ? Math.round(present / marked * 100) : 0;
+  const attEl   = document.getElementById('hdr-attendance');
+  attEl.textContent = attPct + '%';
+  attEl.className = attPct >= 75 ? 'green' : attPct >= 60 ? 'yellow' : 'red';
+}
+
+// ──────────────────────────────────────────
+// TABS
+// ──────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'calendar') renderCalendar();
+}
+
+// ──────────────────────────────────────────
+// SUBJECTS
+// ──────────────────────────────────────────
+function addSubject() {
+  const name = document.getElementById('subjectName').value.trim();
+  const ch   = parseInt(document.getElementById('totalChapters').value) || 0;
+  if (!name) { document.getElementById('subjectName').focus(); return; }
+  subjects.push({ id: Date.now(), name, totalChapters: ch, chaptersCompleted: 0, topics: [] });
+  document.getElementById('subjectName').value = '';
+  document.getElementById('totalChapters').value = '';
+  save();
+  render();
+}
+
+function changeCompleted(id, delta) {
+  const sub = subjects.find(s => s.id === id);
+  const max = sub.totalChapters || 9999;
+  sub.chaptersCompleted = Math.max(0, Math.min(max, (sub.chaptersCompleted || 0) + delta));
+  save();
+  refreshCard(id, true);
+}
+
+function changeTotal(id, delta) {
+  const sub = subjects.find(s => s.id === id);
+  const newVal = Math.max(sub.chaptersCompleted || 0, (sub.totalChapters || 0) + delta);
+  sub.totalChapters = Math.max(0, newVal);
+  save();
+  refreshCard(id, true);
+}
+
+function deleteSubject(id) {
+  if (!confirm('Delete this subject and all its chapters?')) return;
+  subjects = subjects.filter(s => s.id !== id);
+  save(); render();
+}
+
+function addTopic(id) {
+  const inp = document.getElementById('ti_' + id);
+  const val = inp.value.trim();
+  if (!val) return;
+  subjects.find(s => s.id === id).topics.push({ id: Date.now(), name: val, done: false });
+  inp.value = '';
+  save();
+  refreshCard(id, true);
+}
+
+function toggleTopic(subId, topId) {
+  const sub = subjects.find(s => s.id === subId);
+  const t   = sub.topics.find(t => t.id === topId);
+  t.done = !t.done;
+  save();
+  refreshCard(subId, true);
+}
+
+function deleteTopic(subId, topId) {
+  const sub = subjects.find(s => s.id === subId);
+  sub.topics = sub.topics.filter(t => t.id !== topId);
+  save();
+  refreshCard(subId, true);
+}
+
+function toggleCard(id) {
+  document.getElementById('cb_' + id)?.classList.toggle('open');
+  document.getElementById('chv_' + id)?.classList.toggle('open');
+}
+
+function pctColor(p) {
+  return p >= 75 ? 'fill-green' : p >= 40 ? 'fill-blue' : 'fill-yellow';
+}
+function badge(p) {
+  if (p >= 75) return ['badge-green',  '✓ On Track'];
+  if (p >= 40) return ['badge-yellow', '⚡ In Progress'];
+  return ['badge-red', '○ Just Started'];
+}
+
+function buildCard(sub) {
+  const done    = sub.chaptersCompleted || 0;
+  const total   = sub.totalChapters || 0;
+  const left    = Math.max(0, total - done);
+  const pct     = total ? Math.round(done / total * 100) : 0;
+  const [bc, bt] = badge(pct);
+
+  const topicsHtml = sub.topics.map(t => `
+    <div class="topic-row ${t.done ? 'done' : ''}">
+      <div class="topic-check" onclick="toggleTopic(${sub.id},${t.id})"></div>
+      <span class="topic-name">${t.name}</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteTopic(${sub.id},${t.id})">✕</button>
+    </div>`).join('');
+
+  return `
+  <div class="subject-card" id="card_${sub.id}">
+    <div class="card-header" onclick="toggleCard(${sub.id})">
+      <div class="subject-name">
+        ${sub.name}
+        <span class="badge ${bc}">${bt}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="card-meta">
+          <div class="mini-stat">
+            <strong>${pct}%</strong>
+            Done
+          </div>
+          <div class="mini-stat">
+            <strong>${done}/${total}</strong>
+            Chapters
+          </div>
+        </div>
+        <span class="chevron" id="chv_${sub.id}">▼</span>
+      </div>
+    </div>
+
+    <!-- Dual progress bar -->
+    <div class="progress-row">
+      <div class="progress-item">
+        <div class="progress-label"><span>Syllabus Covered</span><span>${pct}%</span></div>
+        <div class="progress-track"><div class="progress-fill ${pctColor(pct)}" style="width:${pct}%"></div></div>
+      </div>
+      <div class="progress-item" style="max-width:220px;">
+        <div class="progress-label"><span>Chapters Done</span><span>${done} / ${total}</span></div>
+        <div class="progress-track"><div class="progress-fill fill-blue" style="width:${total ? Math.round(done/total*100) : 0}%"></div></div>
+      </div>
+    </div>
+
+    <!-- Expandable body -->
+    <div class="card-body" id="cb_${sub.id}">
+
+      <!-- Chapter Stepper -->
+      <div class="chapter-stepper">
+        <!-- Chapters Completed stepper -->
+        <div class="stepper-group">
+          <div class="stepper-label">Chapters Completed</div>
+          <div class="stepper-row">
+            <button class="step-btn minus" onclick="changeCompleted(${sub.id},-1)">−</button>
+            <div class="step-val" style="color:var(--accent);">${done}</div>
+            <button class="step-btn" onclick="changeCompleted(${sub.id},1)">+</button>
+          </div>
+        </div>
+        <div class="stepper-divider"></div>
+        <!-- Total Chapters stepper -->
+        <div class="stepper-group">
+          <div class="stepper-label">Total Chapters</div>
+          <div class="stepper-row">
+            <button class="step-btn minus" onclick="changeTotal(${sub.id},-1)">−</button>
+            <div class="step-val" style="color:var(--text);">${total}</div>
+            <button class="step-btn" onclick="changeTotal(${sub.id},1)">+</button>
+          </div>
+        </div>
+        <div class="stepper-divider"></div>
+        <!-- Remaining -->
+        <div class="stepper-group">
+          <div class="stepper-label">Remaining</div>
+          <div class="stepper-row">
+            <div class="step-val" style="color:var(--accent2);font-size:1.6rem;">${left}</div>
+          </div>
+        </div>
+        <div class="stepper-divider"></div>
+        <!-- Progress % -->
+        <div class="stepper-group">
+          <div class="stepper-label">Progress</div>
+          <div class="stepper-row">
+            <div class="stepper-pct">${pct}%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="topics-header">
+        <div class="topics-title">📋 Chapter Names (optional)</div>
+        <span style="font-size:0.62rem;color:var(--muted);">Add chapter names to track individually</span>
+      </div>
+      <div class="add-topic-form">
+        <input type="text" id="ti_${sub.id}" placeholder="Add chapter or topic name..." onkeydown="if(event.key==='Enter') addTopic(${sub.id})" />
+        <button class="btn btn-primary btn-sm" onclick="addTopic(${sub.id})">+ Add</button>
+      </div>
+      <div class="topics-list">
+        ${topicsHtml || '<p style="font-size:0.74rem;color:var(--muted);padding:6px 0;">No chapter names added yet.</p>'}
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <button class="btn btn-danger btn-sm" onclick="deleteSubject(${sub.id})">Delete Subject</button>
+    </div>
+  </div>`;
+}
+
+function refreshCard(id, keepOpen) {
+  const card = document.getElementById('card_' + id);
+  if (!card) return;
+  const wasOpen = keepOpen || document.getElementById('cb_' + id)?.classList.contains('open');
+  const sub = subjects.find(s => s.id === id);
+  const tmp = document.createElement('div');
+  tmp.innerHTML = buildCard(sub);
+  card.replaceWith(tmp.firstElementChild);
+  if (wasOpen) setTimeout(() => {
+    document.getElementById('cb_' + id)?.classList.add('open');
+    document.getElementById('chv_' + id)?.classList.add('open');
+  }, 0);
+}
+
+function render() {
+  const list = document.getElementById('subjectsList');
+  if (!subjects.length) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📚</div><p>No subjects yet. Add your first subject above!</p></div>`;
+  } else {
+    list.innerHTML = subjects.map(buildCard).join('');
+  }
+  updateHeader();
+}
+
+// ──────────────────────────────────────────
+// CALENDAR 2026
+// ──────────────────────────────────────────
+const MONTH_NAMES = ['January','February','March','April','May','June',
+                     'July','August','September','October','November','December'];
+const DAYS_IN = [31,28,31,30,31,30,31,31,30,31,30,31]; // 2026 not leap
+
+function toggleDay(ds) {
+  // Don't mark future
+  if (ds > TODAY_STR) return;
+  const cur = calData[ds];
+  if      (!cur)              calData[ds] = 'present';
+  else if (cur === 'present') calData[ds] = 'absent';
+  else                        delete calData[ds];
+  save();
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  let gPresent = 0, gAbsent = 0;
+
+  MONTH_NAMES.forEach((mName, mIdx) => {
+    const dim     = DAYS_IN[mIdx];
+    const firstDow = new Date(2026, mIdx, 1).getDay();
+    let mPresent = 0, mAbsent = 0;
+
+    for (let d = 1; d <= dim; d++) {
+      const ds = `2026-${String(mIdx+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      if (calData[ds] === 'present') { mPresent++; gPresent++; }
+      if (calData[ds] === 'absent')  { mAbsent++;  gAbsent++; }
+    }
+
+    const mMarked = mPresent + mAbsent;
+    const mPct    = mMarked ? Math.round(mPresent / mMarked * 100) : null;
+
+    const card = document.createElement('div');
+    card.className = 'month-card';
+
+    // Month header
+    card.innerHTML = `
+      <div class="month-header">
+        <div class="month-name">${mName} 2026</div>
+        <div class="month-stats">
+          <span class="mp">${mPresent}P</span> · ${mAbsent}A · ${mMarked} marked
+          ${mPct !== null ? `· <span class="mpct">${mPct}%</span>` : ''}
+        </div>
+      </div>
+      <div class="cal-day-labels">
+        ${['Su','Mo','Tu','We','Th','Fr','Sa'].map(l => `<div class="cal-day-lbl">${l}</div>`).join('')}
+      </div>`;
+
+    const daysDiv = document.createElement('div');
+    daysDiv.className = 'cal-days-grid';
+
+    // Blank cells for offset
+    for (let i = 0; i < firstDow; i++) {
+      const el = document.createElement('div');
+      el.className = 'cal-day empty';
+      daysDiv.appendChild(el);
+    }
+
+    for (let d = 1; d <= dim; d++) {
+      const ds      = `2026-${String(mIdx+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isFuture = ds > TODAY_STR;
+      const isToday  = ds === TODAY_STR;
+      const status   = calData[ds];
+
+      const el = document.createElement('div');
+      el.textContent = d;
+
+      if (isFuture) {
+        el.className = 'cal-day future';
+      } else {
+        let cls = 'cal-day ';
+        if (status === 'present') cls += 'present';
+        else if (status === 'absent') cls += 'absent';
+        else cls += 'unmarked';
+        if (isToday) cls += ' today';
+        el.className = cls;
+        el.onclick = () => toggleDay(ds);
+        el.title = isToday ? 'Today — click to mark' : ds;
+      }
+      daysDiv.appendChild(el);
+    }
+
+    card.appendChild(daysDiv);
+    grid.appendChild(card);
+  });
+
+  // Update summary panel
+  const gTotal = gPresent + gAbsent;
+  const gPct   = gTotal ? Math.round(gPresent / gTotal * 100) : 0;
+
+  document.getElementById('sumPresent').textContent = gPresent;
+  document.getElementById('sumAbsent').textContent  = gAbsent;
+  document.getElementById('sumTotal').textContent   = gTotal;
+  document.getElementById('circleLabel').textContent = gPct + '%';
+
+  // Circle: circumference ≈ 2π×34 = 213.6
+  const arc = document.getElementById('circleArc');
+  arc.setAttribute('stroke-dashoffset', 213.6 - (gPct / 100 * 213.6));
+  arc.setAttribute('stroke', gPct >= 75 ? '#4fffb0' : gPct >= 50 ? '#ffd166' : '#ff6b6b');
+}
+
+// ──────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────
+document.getElementById('subjectName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addSubject();
+});
+
+render();
+updateHeader();
+</script>
+</body>
+</html>
